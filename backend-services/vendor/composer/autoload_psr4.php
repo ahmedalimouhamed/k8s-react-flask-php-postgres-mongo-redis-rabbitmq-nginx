@@ -6,5 +6,8 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'Fedora\\BackendServices\\' => array($baseDir . '/src'),
+    'phpseclib3\\' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
+    'PhpAmqpLib\\' => array($vendorDir . '/php-amqplib/php-amqplib/PhpAmqpLib'),
+    'ParagonIE\\ConstantTime\\' => array($vendorDir . '/paragonie/constant_time_encoding/src'),
+    '' => array($baseDir . '/src'),
 );

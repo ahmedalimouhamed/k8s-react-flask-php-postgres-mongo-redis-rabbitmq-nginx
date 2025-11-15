@@ -4,20 +4,41 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitf5e1f53d70c981532eafdbc9f2099ee9
+class ComposerStaticInit778dac25fa3ef06810f147b03d1b2c3f
 {
+    public static $files = array (
+        'decc78cc4436b1292c6c0d151b19445c' => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib/bootstrap.php',
+    );
+
     public static $prefixLengthsPsr4 = array (
-        'F' => 
+        'p' => 
         array (
-            'Fedora\\BackendServices\\' => 23,
+            'phpseclib3\\' => 11,
+        ),
+        'P' => 
+        array (
+            'PhpAmqpLib\\' => 11,
+            'ParagonIE\\ConstantTime\\' => 23,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'Fedora\\BackendServices\\' => 
+        'phpseclib3\\' => 
         array (
-            0 => __DIR__ . '/../..' . '/src',
+            0 => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib',
         ),
+        'PhpAmqpLib\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/php-amqplib/php-amqplib/PhpAmqpLib',
+        ),
+        'ParagonIE\\ConstantTime\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src',
+        ),
+    );
+
+    public static $fallbackDirsPsr4 = array (
+        0 => __DIR__ . '/../..' . '/src',
     );
 
     public static $classMap = array (
@@ -27,9 +48,10 @@ class ComposerStaticInitf5e1f53d70c981532eafdbc9f2099ee9
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitf5e1f53d70c981532eafdbc9f2099ee9::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitf5e1f53d70c981532eafdbc9f2099ee9::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInitf5e1f53d70c981532eafdbc9f2099ee9::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit778dac25fa3ef06810f147b03d1b2c3f::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit778dac25fa3ef06810f147b03d1b2c3f::$prefixDirsPsr4;
+            $loader->fallbackDirsPsr4 = ComposerStaticInit778dac25fa3ef06810f147b03d1b2c3f::$fallbackDirsPsr4;
+            $loader->classMap = ComposerStaticInit778dac25fa3ef06810f147b03d1b2c3f::$classMap;
 
         }, null, ClassLoader::class);
     }

@@ -45,7 +45,7 @@ docker exec -i postgres-dev psql -U user -d mydb << EOF
 EOF
 
 # Démarrage du backend Flask
-cd backend-api
+cd ../backend-api
 if [ ! -d "venv" ]; then
     echo "Creating Python virtual environment..."
     python -m venv venv

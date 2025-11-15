@@ -1,3 +1,4 @@
+import traceback
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import psycopg2
@@ -8,33 +9,39 @@ import json
 import os
 
 app = Flask(__name__)
-CORS(app)  # Cela devrait normalement résoudre les problèmes CORS
+CORS(app) 
 
 # Configurations
-POSTGRES_HOST = os.getenv('POSTGRES_HOST', 'localhost')
-MONGO_HOST = os.getenv('MONGO_HOST', 'localhost')
-REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
-RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'localhost')
+POSTGRES_URL = os.getenv('POSTGRES_URL', 'postgres:5432')
+#MONGO_URL = os.getenv('MONGO_URL', 'mongodb:27017')
+MONGO_URL = 'mongodb:27017'
+REDIS_HOST = os.getenv('REDIS_HOST', 'redis')
+#RABBITMQ_HOST = os.getenv('RABBITMQ_URL', 'rabbitmq')
+RABBITMQ_HOST = 'rabbitmq'
+
+# DEBUG - Afficher les valeurs des variables d'environnement
+print("=== DEBUG ENV VARIABLES ===")
+print(f"MONGO_URL: '{MONGO_URL}'")
+print(f"POSTGRES_URL: '{POSTGRES_URL}'")
+print(f"REDIS_HOST: '{REDIS_HOST}'")
+print(f"RABBITMQ_HOST: '{RABBITMQ_HOST}'")
+print("===========================")
 
 # Connexion bases de données
 def get_postgres_conn():
-    return psycopg2.connect(
-        host=POSTGRES_HOST,
-        database="mydb",
-        user="user",
-        password="pass",
-        port=5432
-    )
+    return psycopg2.connect(f"postgresql://appuser:apppass@{POSTGRES_URL}/appdb")
 
 def get_mongo_client():
-    return pymongo.MongoClient(f"mongodb://{MONGO_HOST}:27017/")
+    mongo_uri = f"mongodb://{MONGO_URL}/appdb"
+    return pymongo.MongoClient(mongo_uri)
 
 def get_redis_client():
-    return redis.Redis(host=REDIS_HOST, port=6379, decode_responses=True)  # Correction: Redis au lieu de Rdis
+    return redis.Redis(host=REDIS_HOST, port=6379, decode_responses=True)
 
 def get_rabbitmq_connection():
+    credentials = pika.PlainCredentials("guest", "guest")
     return pika.BlockingConnection(
-        pika.ConnectionParameters(host=RABBITMQ_HOST, port=5672)
+        pika.ConnectionParameters(host=RABBITMQ_HOST, port=5672, credentials= credentials)
     )
 
 # Routes API
@@ -47,16 +54,7 @@ def get_users():
         users = cursor.fetchall()
         cursor.close()
         conn.close()
-        
-        # Convertir en format JSON propre
-        users_list = []
-        for user in users:
-            users_list.append({
-                'id': user[0],
-                'name': user[1],
-                'email': user[2]
-            })
-        return jsonify(users_list)
+        return jsonify(users)
     except Exception as e:
         print(f"Error fetching users: {e}")
         return jsonify({'error': 'Failed to fetch users'}), 500
@@ -64,10 +62,8 @@ def get_users():
 @app.route('/api/orders', methods=['POST'])
 def create_order():
     try:
-        data = request.get_json() 
-        if not data:
-            return jsonify({'error': 'No JSON data provided'}), 400
-
+        data = request.json
+        
         # PostgreSQL - données transactionnelles
         conn = get_postgres_conn()
         cursor = conn.cursor()
@@ -82,7 +78,7 @@ def create_order():
 
         # MongoDB - données document
         mongo_client = get_mongo_client()
-        mongo_db = mongo_client.mydb
+        mongo_db = mongo_client.appdb
         mongo_db.orders.insert_one({
             'postgres_id': order_id,
             'items': data['items'],
@@ -97,7 +93,12 @@ def create_order():
         # RabbitMQ - notification
         connection = get_rabbitmq_connection()
         channel = connection.channel()
-        channel.queue_declare(queue='order_created')
+        channel.queue_declare(
+            queue='order_created', 
+            durable=True, 
+            auto_delete=False,
+            arguments=None
+        )
         channel.basic_publish(
             exchange='',
             routing_key='order_created',
@@ -108,8 +109,9 @@ def create_order():
         return jsonify({'order_id': order_id, 'status': 'created'})
     
     except Exception as e:
-        print(f"Error creating order: {e}")
-        return jsonify({'error': 'Failed to create order'}), 500
+        print("Error creating order: ", e)
+        traceback.print_exc()  
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/health', methods=['GET'])
 def health():
